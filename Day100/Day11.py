@@ -1,18 +1,21 @@
 # 文件和异常
+import time
+
+
 def main():
-    f = None
-    try:
-        f = open('/tmp/WillFinish.txt',encoding='utf-8')
+    with open('/tmp/test.txt') as f:
         print(f.read())
-    except FileNotFoundError:
-        print('无法打开指定的文件！')
-    except LookupError:
-        print('指定了未知的编码！')
-    except UnicodeEncodeError:
-        print('读取文件时解码错误！')
-    finally:
-        if f:
-            f.close()
+
+    with open('/tmp/test.txt') as f:
+        for line in f:
+            print(line, end='')
+            time.sleep(0.5)
+    print()
+
+    with open('/tmp/test.txt') as f:
+        lines = f.readlines()
+    for line in lines:
+        print(line)
 
 if __name__ == '__main__':
     main()
