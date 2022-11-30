@@ -1,4 +1,5 @@
 from enum import Enum
+import TokenType
 
 
 class DfaState(Enum):
@@ -33,12 +34,43 @@ class DfaState(Enum):
     LeftParen = 24
     RightParen = 25
 
-class SimpleToken():
+
+class SimpleToken:
+    def __init__(self, token, type):
+        self.token = token
+        self.type = type
+
+    def getType(self):
+        return self.type
+
+    def getToken(self):
+        return self.token
 
 
+class SimpleTokenReader:
+    def __init__(self, tokens, pos):
+        self.tokens = tokens
+        self.pos = pos
 
-tokenText =[]
-tokens = []
+    def read(self):
+        if self.pos < len(self.tokens):
+            self.pos += 1
+            return self.tokens[self.pos]
+        return None
 
-def initToken(ch):
-    if len(tokenText) > 0:
+    def peek(self):
+        if self.pos < len(self.tokens):
+            return self.tokens[self.pos]
+        return None
+
+    def unread(self):
+        if self.pos > 0:
+            self.pos -= 1
+
+    def getPosition(self):
+        return self.pos
+
+    def setPosition(self, position):
+        if 0 <= position < len(self.tokens):
+            self.pos = position
+
