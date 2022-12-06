@@ -1,5 +1,5 @@
 from enum import Enum
-import TokenType
+from TokenType import TokenType
 
 
 class DfaState(Enum):
@@ -8,7 +8,7 @@ class DfaState(Enum):
     # 标识符状态
     Id = 2
     # 大于操作符状态
-    Gt = 3
+    GT = 3
     # 大于等于操作符
     GE = 4
     # 数字字面量
@@ -74,3 +74,91 @@ class SimpleTokenReader:
         if 0 <= position < len(self.tokens):
             self.pos = position
 
+
+tokenText = ""  # 临时保存token的文本
+tokens = []  # 保存解析出来的Token
+token = None  # 当前正在解析的Toke
+
+
+def initToken(ch):
+    global tokenText
+    global token
+    if len(tokenText) > 0:
+        token.text = str(tokenText)
+        tokens.append(token)
+    tokenText = []
+    token = SimpleToken()
+    if ch.isalpha():
+        if ch == 'i':
+            newState = DfaState.Id_int1
+        else:
+            newState = DfaState.Id  # 进入Id状态
+        token.type = TokenType.Identifier
+        tokenText.append(ch)
+    elif ch.isdigit():  # 第一个字符是数字
+        newState = DfaState.IntLiteral
+        token.type = TokenType.IntLiteral
+        tokenText.append(ch)
+    elif ch == '>':  # 第一个字符是>
+        newState = DfaState.GT
+        token.type = TokenType.GT
+        tokenText.append(ch)
+    elif ch == '+':
+        newState = DfaState.Plus
+        token.type = TokenType.Plus
+        tokenText.append(ch)
+    elif ch == '-':
+        newState = DfaState.Minus
+        token.type = TokenType.Minus
+        tokenText.append(ch)
+    elif ch == '*':
+        newState = DfaState.Star
+        token.type = TokenType.Star
+        tokenText.append(ch)
+    elif ch == '/':
+        newState = DfaState.Slash
+        token.type = TokenType.Slash
+        tokenText.append(ch)
+    elif ch == ';':
+        newState = DfaState.SemiColon
+        token.type = TokenType.SemiColon
+        tokenText.append(ch)
+    elif ch == '(':
+        newState = DfaState.LeftParen
+        token.type = TokenType.LeftParen
+        tokenText.append(ch)
+    elif ch == ')':
+        newState = DfaState.RightParen
+        token.type = TokenType.RightParen
+        tokenText.append(ch)
+    elif ch == '=':
+        newState = DfaState.Assignment
+        token.type = TokenType.Assignment
+        tokenText.append(ch)
+    else:
+        newState = DfaState.Initial;  # skip all unknown patterns
+    return newState
+
+
+def tokenize(code):
+    tokens = []
+    codes = list(code)
+    tokenText = []
+    state = DfaState.Initial
+    try:
+        for code in codes:
+            if state == DfaState.Initial:
+                state = initToken(code)
+            elif state == DfaState.Id:
+                if code.isDigit() or code.isalpha():
+                    tokenText.append(code)
+                else:
+                    state = initToken(code)
+            elif state == DfaState.GT:
+                if code == '=':
+                    state = DfaState.GE
+                    tokenText.append(code)
+                else:
+                    state = initToken(code)
+    except:
+        print("")
