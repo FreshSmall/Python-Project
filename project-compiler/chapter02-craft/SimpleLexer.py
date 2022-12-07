@@ -36,15 +36,16 @@ class DfaState(Enum):
 
 
 class SimpleToken:
-    def __init__(self, token, type):
-        self.token = token
-        self.type = type
+    # Token类型
+    type = None
+    # 文本值
+    text = None
 
     def getType(self):
         return self.type
 
     def getToken(self):
-        return self.token
+        return self.text
 
 
 class SimpleTokenReader:
@@ -144,13 +145,14 @@ def tokenize(code):
     tokens = []
     codes = list(code)
     tokenText = []
+    global token
     state = DfaState.Initial
     try:
         for code in codes:
             if state == DfaState.Initial:
                 state = initToken(code)
             elif state == DfaState.Id:
-                if code.isDigit() or code.isalpha():
+                if code.isdigit() or code.isalpha():
                     tokenText.append(code)
                 else:
                     state = initToken(code)
@@ -160,5 +162,65 @@ def tokenize(code):
                     tokenText.append(code)
                 else:
                     state = initToken(code)
-    except:
-        print("")
+            elif state == DfaState.GE:
+                pass
+            elif state == DfaState.Assignment:
+                pass
+            elif state == DfaState.Plus:
+                pass
+            elif state == DfaState.Minus:
+                pass
+            elif state == DfaState.Star:
+                pass
+            elif state == DfaState.Slash:
+                pass
+            elif state == DfaState.SemiColon:
+                pass
+            elif state == DfaState.LeftParen:
+                pass
+            elif state == DfaState.RightParen:
+                state = initToken(code)
+            elif state == DfaState.IntLiteral:
+                if code.isDigit:
+                    tokenText.append(code)
+                else:
+                    state = initToken(code)
+            elif state == DfaState.Id_int1:
+                if code == 'n':
+                    state = DfaState.Id_int2
+                    tokenText.append(code)
+                elif code.isDigit or code.isalpha:
+                    state = DfaState.Id  # 切换回Id状态
+                    tokenText.append(code)
+                else:
+                    state = initToken(code)
+            elif state == DfaState.Id_int2:
+                if code == 't':
+                    state = DfaState.Id_int3
+                    tokenText.append(code)
+                elif code.isdigit() or code.isalpha():
+                    state = DfaState.Id
+                    tokenText.append(code)
+                else:
+                    state = initToken(code)
+            elif state == DfaState.Id_int3:
+                if code == ' ' or code == '\t' or code == '\n':
+                    token.type = TokenType.Int
+                    state = initToken(code)
+                else:
+                    state = DfaState.Id  # 切换回Id状态
+                    tokenText.append(code)
+
+        if len(tokenText) > 0:
+            initToken(code)
+
+        print(tokenText)
+    except Exception as ex:
+        print("something is error。error:%s"%ex)
+
+
+if __name__ == '__main__':
+    script = "int age = 45;"
+    print("parse :" + script)
+    tokenReader = tokenize(script)
+    print(tokenReader)
