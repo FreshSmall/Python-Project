@@ -44,14 +44,15 @@ class SimpleToken:
     def getType(self):
         return self.type
 
-    def getToken(self):
+    def getText(self):
         return self.text
 
 
 class SimpleTokenReader:
-    def __init__(self, tokens, pos):
+    pos = 0
+
+    def __init__(self, tokens):
         self.tokens = tokens
-        self.pos = pos
 
     def read(self):
         if self.pos < len(self.tokens):
@@ -76,7 +77,7 @@ class SimpleTokenReader:
             self.pos = position
 
 
-tokenText = ""  # 临时保存token的文本
+tokenText = []  # 临时保存token的文本
 tokens = []  # 保存解析出来的Token
 token = None  # 当前正在解析的Toke
 
@@ -85,10 +86,10 @@ def initToken(ch):
     global tokenText
     global token
     if len(tokenText) > 0:
-        token.text = str(tokenText)
+        token.text = "".join(tokenText)
         tokens.append(token)
-    tokenText = []
-    token = SimpleToken()
+        tokenText = []
+        token = SimpleToken()
     if ch.isalpha():
         if ch == 'i':
             newState = DfaState.Id_int1
@@ -137,15 +138,16 @@ def initToken(ch):
         token.type = TokenType.Assignment
         tokenText.append(ch)
     else:
-        newState = DfaState.Initial;  # skip all unknown patterns
+        newState = DfaState.Initial  # skip all unknown patterns
     return newState
 
 
 def tokenize(code):
-    tokens = []
-    codes = list(code)
-    tokenText = []
     global token
+    global tokenText
+    token = SimpleToken()
+    tokenText = []
+    codes = list(code)
     state = DfaState.Initial
     try:
         for code in codes:
@@ -158,30 +160,31 @@ def tokenize(code):
                     state = initToken(code)
             elif state == DfaState.GT:
                 if code == '=':
+                    token.type = TokenType.GE
                     state = DfaState.GE
                     tokenText.append(code)
                 else:
                     state = initToken(code)
             elif state == DfaState.GE:
-                pass
+                state = initToken(code)
             elif state == DfaState.Assignment:
-                pass
+                state = initToken(code)
             elif state == DfaState.Plus:
-                pass
+                state = initToken(code)
             elif state == DfaState.Minus:
-                pass
+                state = initToken(code)
             elif state == DfaState.Star:
-                pass
+                state = initToken(code)
             elif state == DfaState.Slash:
-                pass
+                state = initToken(code)
             elif state == DfaState.SemiColon:
-                pass
+                state = initToken(code)
             elif state == DfaState.LeftParen:
-                pass
+                state = initToken(code)
             elif state == DfaState.RightParen:
                 state = initToken(code)
             elif state == DfaState.IntLiteral:
-                if code.isDigit:
+                if code.isdigit():
                     tokenText.append(code)
                 else:
                     state = initToken(code)
@@ -213,14 +216,14 @@ def tokenize(code):
 
         if len(tokenText) > 0:
             initToken(code)
-
-        print(tokenText)
     except Exception as ex:
-        print("something is error。error:%s"%ex)
+        print("something is error。error:%s" % ex)
+    return tokens
 
 
 if __name__ == '__main__':
     script = "int age = 45;"
     print("parse :" + script)
-    tokenReader = tokenize(script)
-    print(tokenReader)
+    tokens = tokenize(script)
+    for token in tokens:
+        print(token.getText() + "\t\t" + str(token.getType()))
