@@ -56,8 +56,9 @@ class SimpleTokenReader:
 
     def read(self):
         if self.pos < len(self.tokens):
+            tempToken = self.tokens[self.pos]
             self.pos += 1
-            return self.tokens[self.pos]
+            return tempToken
         return None
 
     def peek(self):
@@ -218,12 +219,14 @@ def tokenize(code):
             initToken(code)
     except Exception as ex:
         print("something is error。error:%s" % ex)
-    return tokens
+    return SimpleTokenReader(tokens)
 
 
 if __name__ == '__main__':
     script = "int age = 45;"
     print("parse :" + script)
-    tokens = tokenize(script)
-    for token in tokens:
-        print(token.getText() + "\t\t" + str(token.getType()))
+    tokenReader = tokenize(script)
+    token = tokenReader.read()
+    while token is not None:
+        print(token.getText() + "  " + str(token.getType()))
+        token = tokenReader.read()
