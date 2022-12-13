@@ -224,9 +224,11 @@ def tokenize(code):
 
 if __name__ == '__main__':
     script = "int age = 45;"
+    script1 = "int age = 45;"
     print("parse :" + script)
     tokenReader = tokenize(script)
+    tokenReader2 = tokenize(script1)
     token = tokenReader.read()
     while token is not None:
-        print(token.getText() + "  " + str(token.getType()))
+        print(token.getText() + "  " + str(token.getType().name))
         token = tokenReader.read()
