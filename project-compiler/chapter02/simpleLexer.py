@@ -7,14 +7,6 @@ import logging
 
 class SimpleLexer:
 
-    def __init__(self):
-        # 临时保存token的文本
-        self.tokenText = []
-        # 保存解析出来的Token
-        self.tokens = []
-        # 当前正在解析的Token
-        self.token = SimpleToken()
-
     def initToken(self, ch):
         if len(self.tokenText) > 0:
             self.token.text = "".join(self.tokenText)
@@ -73,7 +65,12 @@ class SimpleLexer:
         return newState
 
     def tokenize(self, code):
-        token = SimpleToken()
+        # 临时保存token的文本
+        self.tokenText = []
+        # 保存解析出来的Token
+        self.tokens = []
+        # 当前正在解析的Token
+        self.token = SimpleToken()
         codes = list(code)
         state = DfaState.Initial
         try:
@@ -135,7 +132,7 @@ class SimpleLexer:
                         state = self.initToken(code)
                 elif state == DfaState.Id_int3:
                     if code == ' ' or code == '\t' or code == '\n':
-                        token.type = TokenType.Int
+                        self.token.type = TokenType.Int
                         state = self.initToken(code)
                     else:
                         state = DfaState.Id  # 切换回Id状态
@@ -153,6 +150,7 @@ if __name__ == '__main__':
     print("parse :" + script)
     lexer = SimpleLexer()
     tokenReader = lexer.tokenize(script)
+    tokenReader1 = lexer.tokenize(script)
     token1 = tokenReader.read()
     while token1 is not None:
         print(token1.getText() + "  " + str(token1.getType().name))
