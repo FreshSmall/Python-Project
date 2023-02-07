@@ -1,8 +1,10 @@
 import requests
 import openpyxl as op
+import time
+import calendar
 
 
-def queryData(url, userName, cookie):
+def queryData(url, time, cookie):
     # 添加请求头
     header = {
         "Content-Type": "application/json"
@@ -11,7 +13,9 @@ def queryData(url, userName, cookie):
     param = {
         "current": 1,
         "pageSize": 50,
-        "subTeacherName": userName
+        "level1Code": [85],
+        "firstDistStartTime": time,
+        "firstDistEndTime": time+86399999
     }
     # 发送 post 请求
     response = requests.post(url=url, json=param, headers=header, cookies=cookie)
@@ -23,13 +27,13 @@ def queryData(url, userName, cookie):
     total = pagination.get('total')
     totalPage = int(total / 50) + 2
     for i in range(2, totalPage):
-        queryDataImpl(url, userName, cookie, i, agingCallList)
+        queryDataImpl(url, time, cookie, i, agingCallList)
     # create_xl(agingCallList, "测试.xlsx")
     # print(agingCallList)
     return agingCallList
 
 
-def queryDataImpl(url, userName, cookie, i, agingCallListTotal):
+def queryDataImpl(url, time, cookie, i, agingCallListTotal):
     # 添加请求头
     header = {
         "Content-Type": "application/json"
@@ -38,7 +42,9 @@ def queryDataImpl(url, userName, cookie, i, agingCallListTotal):
     param = {
         "current": i,
         "pageSize": 50,
-        "subTeacherName": userName
+        "level1Code": [85],
+        "firstDistStartTime": time,
+        "firstDistEndTime": time+86399999
     }
     # 发送 post 请求
     response = requests.post(url=url, json=param, headers=header, cookies=cookie)
@@ -54,15 +60,15 @@ def create_xl(data, fileName):
     wb = op.Workbook()
     # 创建子表
     ws = wb['Sheet']
-    {'id': 1938729, 'city': '北京', 'subTeacherName': '张正冉', 'subTeacherNumber': '10144734920049984', 'studentName': '',
-     'studentNumber': '6186151', 'subClazzName': '张正冉1072', 'subClazzNumber': '20974415209956352',
-     'firstDistTime': '2023-01-09 13:05:05', 'callCount': 0, 'callStandard': 0, 'level1Code': 85, 'level1Name': '大学',
-     'level2Code': 811068, 'level2Name': '考研', 'level3Code': 4134, 'level3Name': '规划课', 'entryDate': '2021-10-14',
-     'callRecordSaveTime': None, 'directSuperiorName': '郝丹', 'directSuperiorNumber': '10082121', 'agingCallTag': 0,
-     'subTeacherDomain': 'zhangzhengran'}
+    # {'id': 1938729, 'city': '北京', 'subTeacherName': '张正冉', 'subTeacherNumber': '10144734920049984', 'studentName': '',
+    #  'studentNumber': '6186151', 'subClazzName': '张正冉1072', 'subClazzNumber': '20974415209956352',
+    #  'firstDistTime': '2023-01-09 13:05:05', 'callCount': 0, 'callStandard': 0, 'level1Code': 85, 'level1Name': '大学',
+    #  'level2Code': 811068, 'level2Name': '考研', 'level3Code': 4134, 'level3Name': '规划课', 'entryDate': '2021-10-14',
+    #  'callRecordSaveTime': None, 'directSuperiorName': '郝丹', 'directSuperiorNumber': '10082121', 'agingCallTag': 0,
+    #  'subTeacherDomain': 'zhangzhengran'}
 
     ws.append(['城市', '二讲老师', '二讲老师id', '学生名称', '学生编号', '班级名称', '班级id', '首次分配时间', '外呼次数', '是否达标', '一级品类', '二级品类', '三级品类',
-               '直属上级'])  # 添加表头
+               '直属上级', '电话记录时间'])  # 添加表头
     for i in range(len(data)):
         if data[i]["callStandard"] == 0:
             data[i]["callStandard"] = "--"
@@ -73,7 +79,7 @@ def create_xl(data, fileName):
         d = data[i]["city"], data[i]["subTeacherName"], data[i]["subTeacherNumber"], data[i]["studentName"], data[i][
             "studentNumber"], data[i]["subClazzName"], data[i]["subClazzNumber"], data[i]["firstDistTime"], \
             data[i]["callCount"], data[i]["callStandard"], data[i]["level1Name"], data[i]["level2Name"], data[i][
-                "level3Name"], data[i]["directSuperiorName"]
+                "level3Name"], data[i]["directSuperiorName"], data[i]["callRecordSaveTime"]
         ws.append(d)  # 每次写入一行
     wb.save(fileName)
 
@@ -81,8 +87,7 @@ def create_xl(data, fileName):
 if __name__ == '__main__':
     url = "https://a-be-api.baijia.com/duke/aging_call/list"
     cookie = {
-        "cookie": 'fp=35e5966eab3d1fbc58ce3cca3ef1f35c; OUTFOX_SEARCH_USER_ID_NCOO=855479571.6146568; qingzhou_cas_login_cookie="um:gateway:qingzhouCasLogin:8A9A9D909B929C"; prod_portal_gateway_sessionid_2=28124973b60b439587d5338988043fde; GrafanaAuthProxyToken=eyJ0eXBlIjoiSldUIiwiYWxnIjoiUlMyNTYiLCJraWQiOiJjYWxsY2VudGVyIn0.eyJpYXQiOjE2NzMzMjA4ODEzODUsImdyb3VwcyI6ImNhbGxjZW50ZXIiLCJ1c2VybmFtZSI6InlpbmNoYW8ifQ.MuUvij5MsqalUkifa5LulOiJFiV1p-a-CY_V8KVZunh2T7s_jRC_Coon4aZJu00sfI5LAvSw37AipedZvW_FPIDK-uVRDYYHf4ZnyX04d8hfV3JLc_SjypjEdMN1Db5dvaQcOhHhEDhpZ7DchBL6O-ycHprKNzROhEsf8_SFWvEJIA8RflIFsU_A7dDGVGTCv8yM8kqX-OaXXAF-3HBayljZRnJNp_252lIt-j5jyHTt74h4lRi60mh0MfNKYWrDmtuGTL6ZuFasGzI1UeCaf6LxNCbDHzwEydzXoyl8ndflAk6O1hzc5j59j9tf7D95FjqU3U2CyeVwusPP1TqPCQ; _const_d_jsession_id_=4eaf8b25c6ee494d8a2f55e80e2ecba9.a-be-api.baijia.com/auth/login?next=a.baijia.com; CAS_AC_CURRENT_ROLE=%E7%B3%BB%E7%BB%9F%E7%AE%A1%E7%90%86%E5%91%98-tag; a_be_api_sessionid=6D178E41168151722F14AB3FE0C2B95B'
-    }
+        "cookie": 'fp=35e5966eab3d1fbc58ce3cca3ef1f35c; OUTFOX_SEARCH_USER_ID_NCOO=855479571.6146568; gr_user_id=2867ff51-4a72-46db-911d-393a1e44c9fc; _gaotu_track_id_=a06fa012-1572-f228-de4f-d2e8c8445cbf; be26a9c1d6166354_gr_last_sent_cs1=24686; be26a9c1d6166354_gr_cs1=24686; qingzhou_cas_login_cookie="um:gateway:qingzhouCasLogin:8A9A9D909B929C"; CAS_AC_CURRENT_ROLE=%E7%B3%BB%E7%BB%9F%E7%AE%A1%E7%90%86%E5%91%98-tag; GrafanaAuthProxyToken=eyJ0eXBlIjoiSldUIiwiYWxnIjoiUlMyNTYiLCJraWQiOiJkZW1vIn0.eyJpYXQiOjE2NzU3MzM3NzMwMzksImdyb3VwcyI6InNtcyIsInVzZXJuYW1lIjoieWluY2hhbyJ9.Jfjx9Ohatc-fUEdV0b0fqnPUusEQ3JPd3evefBhgpkJ5dwE0ouf0CLOzS35eciZp-TqS0rGkdJWHfu2_uR5yUcll2EInB2FTPMykhJS1-cOJwZ6o6UlBdQdNTzbSFeKM7aH_Yu2H2lalef8J3BBpBxCXNaJPTcAgC_q9AnBn9Pc5L6lTIoPoQj-K_xa-Af3Rgqm0M1FyakteUwRXPcnLYmevnvLT_Da7lF3oBZu0hwNyZg84mbZ0bv3d1pS_XQhDbYNwEQetAljYzaCFQ-b9H6NrnQI1xgd5jqf--2F484ABxMlMgVHNvLFyZtXSaGesXdBdMWZUXBqTNe4UfapXjQ; _const_d_jsession_id_=c751d24c4a30418aa9e4bca856eb4b05.a-be-api.baijia.com/auth/login?next=a.baijia.com; a_be_api_sessionid=F11E7FA5F99C836540D8EBDB2C608D43'}
     names = ["张正冉",
              "张秀文",
              "胡楠",
@@ -152,10 +157,34 @@ if __name__ == '__main__':
              "范程雪",
              "张炜哲",
              "刘金"]
-    # names = ["张正冉", "张秀文"]
     totalList = []
-    for name in names:
-        agingcallList = queryData(url, name, cookie)
-        for callList in agingcallList:
+    times = [
+        1674403200000,
+        1674489600000,
+        1674576000000,
+        1674662400000,
+        1674748800000,
+        1674835200000,
+        1674921600000,
+        1675008000000,
+        1675094400000,
+        1675180800000,
+        1675267200000,
+        1675353600000,
+        1675440000000,
+        1675526400000
+    ]
+    for time in times:
+        agingCallList = queryData(url, time, cookie)
+        for callList in agingCallList:
             totalList.append(callList)
-    create_xl(totalList, "时效质检1.xlsx")
+            #callCount = callList.get("callCount")
+            #firstDistTime = callList.get("firstDistTime")
+            #callRecordTime = callList.get("callRecordSaveTime")
+            # if callRecordTime is not None:
+            #     distTimestamp = calendar.timegm(time.strptime(firstDistTime, "%Y-%m-%d %H:%M:%S"))
+            #     callRecordTimestamp = calendar.timegm(time.strptime(callRecordTime, "%Y-%m-%d %H:%M:%S"))
+            #     if callRecordTimestamp - distTimestamp < 604800:
+            #         totalList.append(callList)
+    create_xl(totalList, "时效质检2.xlsx")
+    # print(len(totalList))
