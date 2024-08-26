@@ -1,5 +1,6 @@
 from playwright.sync_api import sync_playwright
 
+
 # 商品链接
 product_url = "https://item.taobao.com/item.htm?id=123456789"
 

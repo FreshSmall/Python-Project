@@ -8,7 +8,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 options = webdriver.ChromeOptions()
 options.add_argument("--disable-blink-features=AutomationControlled")
-driver = webdriver.Chrome(executable_path="chromedriver", options=options)
+driver = webdriver.Chrome(executable_path="/Users/bjhl/chromedriver", options=options)
 
 
 def login(url):
@@ -120,4 +120,4 @@ if __name__ == "__main__":
     url = "https://detail.tmall.com/item.htm?id=681221873091&spm=a1z0d.6639537/tb.1997196601.12.52957484xQODOM"
     # url = input("请输入抢购地址")
     login(url)
-    buy(times)
+    #buy(times)
