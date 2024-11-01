@@ -3,7 +3,6 @@ from langchain.agents import initialize_agent
 from langchain.llms import OpenAI
 from langchain.agents import AgentType
 from dotenv import load_dotenv
-from 是的发的 import sdfa
 
 load_dotenv()
 
@@ -25,4 +24,3 @@ agent = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION
 if __name__ == '__main__':
     # 运行 agent
     agent.run("What's the date today? What great events have taken place today in history?")
-    soursfasdf
