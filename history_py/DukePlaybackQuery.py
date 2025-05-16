@@ -52,7 +52,7 @@ if __name__ == '__main__':
     df["回放链接"] = df.apply(getPlaybackUrl, axis=1)
     df["room_number"] = df["room_number"].astype(str)
     df["clazz_lesson_number"] = df["clazz_lesson_number"].astype(str)
-    output_file_path = "/Users/bjhl/1v1_play_0524.xlsx"  # 替换为您想要保存的文件路径
+    output_file_path = "/Users/bjhl/1v1_play_1213.xlsx"  # 替换为您想要保存的文件路径
     df.to_excel(output_file_path, index=False)
 #
 #     # df = pd.read_excel('/Users/bjhl/v-v-jiaxiaofeng.xlsx')
