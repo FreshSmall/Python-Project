@@ -552,8 +552,7 @@ def create_custom_page(database_id: str, title_property_name: str) -> Optional[d
         traceback.print_exc()
         return None
 
-def main(database_id: str, template_id: str = None, force_create: bool = False, 
-         use_copy_method: bool = True, use_custom_format: bool = False, debug: bool = False):
+def main(database_id: str, template_id: str = None, force_create: bool = False, debug: bool = False):
     # 设置日志级别
     if debug:
         logger.setLevel(logging.DEBUG)
@@ -614,8 +613,6 @@ if __name__ == "__main__":
     parser.add_argument("--database", "-d", default="a61b3135-719a-4bb8-969e-5e8759a421c1", help="数据库ID")
     parser.add_argument("--template", "-t", default="47dd593c8e474515928f8824a398a5b9", help="模板页面ID")
     parser.add_argument("--force", "-f", action="store_true", help="强制创建新页面，即使当日已有页面")
-    parser.add_argument("--no-copy", "-nc", action="store_true", help="不使用复制模板方法")
-    parser.add_argument("--custom", "-c", action="store_true", help="使用自定义格式创建页面")
     parser.add_argument("--debug", action="store_true", help="启用调试模式")
     parser.add_argument("--token", help="Notion API 令牌，如果不提供则使用默认令牌")
     
@@ -625,4 +622,4 @@ if __name__ == "__main__":
     if args.token:
         notion = Client(auth=args.token)
         logger.info("使用提供的令牌初始化Notion客户端") 
-    main(args.database, args.template, args.force, not args.no_copy, args.custom, args.debug)
+    main(args.database, args.template, args.force, args.debug)
