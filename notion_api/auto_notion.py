@@ -453,17 +453,7 @@ def create_custom_page(database_id: str, title_property_name: str) -> Optional[d
                         }
                     ]
                 }
-            },
-
-            # 已完成部分
-            {
-                "heading_2": {
-                    "rich_text": [{
-                        "text": {"content": "已完成"}
-                    }]
-                }
-            },
-            
+            }, 
             # 问题反思部分
             {
                 "heading_2": {
@@ -546,6 +536,14 @@ def create_custom_page(database_id: str, title_property_name: str) -> Optional[d
                         }
                     ]
                 }
+            },
+             # 已完成部分
+            {
+                "heading_2": {
+                    "rich_text": [{
+                        "text": {"content": "代码提交"}
+                    }]
+                }
             }
         ]
         
@@ -564,13 +562,17 @@ def create_custom_page(database_id: str, title_property_name: str) -> Optional[d
         return None
 
 def add_completed_items(page_id: str, completed_items: List[str]) -> bool:
-    """向页面的"已完成"部分添加内容"""
+    """向页面最底部添加已完成的内容项目"""
     try:
         if not completed_items:
             logger.info("没有提供已完成项目，跳过添加")
             return True
             
         logger.info(f"向页面 {page_id} 添加 {len(completed_items)} 个已完成项目")
+        
+        # 获取页面的所有块
+        response = notion.blocks.children.list(block_id=page_id)
+        blocks = response.get("results", [])
         
         # 构建已完成项目的块结构
         completed_blocks = []
@@ -583,8 +585,9 @@ def add_completed_items(page_id: str, completed_items: List[str]) -> bool:
                     "checked": True
                 }
             })
-            
-        # 添加内容块
+        
+        # 添加内容块到页面最底部
+        # 注意：这会将内容添加为页面的最后一个子块，出现在所有现有内容之后
         notion.blocks.children.append(
             block_id=page_id,
             children=completed_blocks
