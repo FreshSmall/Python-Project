@@ -5,6 +5,8 @@ from typing import List, Optional, Dict, Any
 import json
 import argparse
 import logging
+import sys
+import os
 
 # 配置日志
 logging.basicConfig(
@@ -452,6 +454,15 @@ def create_custom_page(database_id: str, title_property_name: str) -> Optional[d
                     ]
                 }
             },
+
+            # 已完成部分
+            {
+                "heading_2": {
+                    "rich_text": [{
+                        "text": {"content": "已完成"}
+                    }]
+                }
+            },
             
             # 问题反思部分
             {
@@ -552,7 +563,44 @@ def create_custom_page(database_id: str, title_property_name: str) -> Optional[d
         traceback.print_exc()
         return None
 
-def main(database_id: str, template_id: str = None, force_create: bool = False, debug: bool = False):
+def add_completed_items(page_id: str, completed_items: List[str]) -> bool:
+    """向页面的"已完成"部分添加内容"""
+    try:
+        if not completed_items:
+            logger.info("没有提供已完成项目，跳过添加")
+            return True
+            
+        logger.info(f"向页面 {page_id} 添加 {len(completed_items)} 个已完成项目")
+        
+        # 构建已完成项目的块结构
+        completed_blocks = []
+        for item in completed_items:
+            completed_blocks.append({
+                "to_do": {
+                    "rich_text": [{
+                        "text": {"content": item}
+                    }],
+                    "checked": True
+                }
+            })
+            
+        # 添加内容块
+        notion.blocks.children.append(
+            block_id=page_id,
+            children=completed_blocks
+        )
+        
+        logger.info("已完成项目添加成功")
+        return True
+    except Exception as e:
+        logger.error(f"添加已完成项目失败: {str(e)}")
+        if logger.level <= logging.DEBUG:
+            import traceback
+            logger.debug(traceback.format_exc())
+        return False
+
+def main(database_id: str, template_id: str = None, force_create: bool = False, 
+         completed_items: List[str] = None, debug: bool = False):
     # 设置日志级别
     if debug:
         logger.setLevel(logging.DEBUG)
@@ -582,18 +630,24 @@ def main(database_id: str, template_id: str = None, force_create: bool = False, 
         # 查询当日页面
         today_pages = get_today_pages(database_id)
         
+        created_page = None
+        
         if today_pages and not force_create:
             logger.info(f"找到{len(today_pages)}个当日页面")
             for page in today_pages:
                 logger.info(f"- {page['id']} | {page['url']}")
+            # 如果有已存在的页面，且需要添加已完成项目，则使用第一个页面
+            if completed_items and today_pages:
+                created_page = today_pages[0]
         else:
             if force_create:
                 logger.info("强制创建新页面...")
             else:
                 logger.info("当日无页面，开始创建...")
             
-            # 根据参数决定使用哪种方法创建页面
+            # 创建新页面
             try:
+                # 默认使用自定义格式创建页面
                 logger.info("使用自定义格式创建页面...")
                 if created_page := create_custom_page(database_id, title_property_name):
                     logger.info(f"创建成功: {created_page['url']}")
@@ -601,6 +655,11 @@ def main(database_id: str, template_id: str = None, force_create: bool = False, 
                 logger.error(f"创建页面失败: {str(e)}")
                 import traceback
                 logger.debug(traceback.format_exc())
+        
+        # 如果有页面且有已完成项目，添加它们
+        if created_page and completed_items:
+            add_completed_items(created_page["id"], completed_items)
+            
     except Exception as e:
         logger.error(f"出现错误: {str(e)}")
         if debug:
@@ -615,11 +674,10 @@ if __name__ == "__main__":
     parser.add_argument("--force", "-f", action="store_true", help="强制创建新页面，即使当日已有页面")
     parser.add_argument("--debug", action="store_true", help="启用调试模式")
     parser.add_argument("--token", help="Notion API 令牌，如果不提供则使用默认令牌")
-    
+    parser.add_argument("--completed", "-c", nargs="+", help="要添加到已完成部分的项目列表")
     args = parser.parse_args()
-    
     # 如果提供了令牌，重新初始化客户端
     if args.token:
         notion = Client(auth=args.token)
         logger.info("使用提供的令牌初始化Notion客户端") 
-    main(args.database, args.template, args.force, args.debug)
+    main(args.database, args.template, args.force, args.completed, args.debug)
