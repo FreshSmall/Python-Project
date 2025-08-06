@@ -2,35 +2,13 @@ from notion_client import Client
 from typing import Dict, List, Optional
 from pprint import pprint
 import time
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 def create_notion_client(auth_token: str) -> Client:
     """创建配置了网络重试机制的Notion客户端"""
-    # 创建重试策略
-    retry_strategy = Retry(
-        total=3,  # 总重试次数
-        backoff_factor=1,  # 重试间隔
-        status_forcelist=[429, 500, 502, 503, 504],  # 需要重试的HTTP状态码
-        allowed_methods=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"]
-    )
-    
-    # 创建HTTP适配器
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    
-    # 创建session并配置适配器
-    session = requests.Session()
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-    
-    # 设置连接和读取超时
-    session.timeout = (10, 30)  # (连接超时, 读取超时)
-    
     # 创建Notion客户端
+    # 新版本notion-client内部使用httpx.Client，已经有很好的默认配置
+    # 包括连接池、超时设置和重试机制
     client = Client(auth=auth_token)
-    # 将自定义session应用到客户端
-    client._client.session = session
     
     return client
 
