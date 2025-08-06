@@ -7,6 +7,10 @@ import argparse
 import logging
 import sys
 import os
+import time
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # 配置日志
 logging.basicConfig(
@@ -15,8 +19,72 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 logger = logging.getLogger("notion-api")
+
+# 初始化客户端，配置更稳定的网络连接
+def create_notion_client(auth_token: str) -> Client:
+    """创建配置了网络重试机制的Notion客户端"""
+    # 创建重试策略
+    retry_strategy = Retry(
+        total=3,  # 总重试次数
+        backoff_factor=1,  # 重试间隔
+        status_forcelist=[429, 500, 502, 503, 504],  # 需要重试的HTTP状态码
+        allowed_methods=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"]
+    )
+    
+    # 创建HTTP适配器
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    
+    # 创建session并配置适配器
+    session = requests.Session()
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    
+    # 设置连接和读取超时
+    session.timeout = (10, 30)  # (连接超时, 读取超时)
+    
+    # 创建Notion客户端
+    client = Client(auth=auth_token)
+    # 将自定义session应用到客户端
+    client._client.session = session
+    
+    return client
+
 # 初始化客户端
-notion = Client(auth="ntn_b71264501237SHXAg8e3pN81R2JcWRJS8PIcJMkP4fR1fo")
+notion = create_notion_client("ntn_b71264501237SHXAg8e3pN81R2JcWRJS8PIcJMkP4fR1fo")
+
+def retry_on_failure(max_retries: int = 3, delay: float = 1.0):
+    """装饰器：为函数添加重试机制"""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            last_exception = None
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    last_exception = e
+                    error_msg = str(e).lower()
+                    
+                    # 检查是否是网络相关错误
+                    if any(keyword in error_msg for keyword in [
+                        'connection reset by peer', 'connection aborted', 
+                        'connection broken', 'timeout', 'network', 
+                        'connection error', 'read timeout'
+                    ]):
+                        if attempt < max_retries - 1:
+                            wait_time = delay * (2 ** attempt)  # 指数退避
+                            logger.warning(f"网络错误，{wait_time}秒后重试 (尝试 {attempt + 1}/{max_retries}): {e}")
+                            time.sleep(wait_time)
+                            continue
+                    
+                    # 如果不是网络错误或者已达到最大重试次数，直接抛出异常
+                    raise e
+            
+            # 如果所有重试都失败，抛出最后一个异常
+            raise last_exception
+        return wrapper
+    return decorator
+
+@retry_on_failure(max_retries=3, delay=1.0)
 def get_database_schema(database_id: str) -> dict:
     """获取数据库结构，查看可用的属性"""
     try:
@@ -25,6 +93,7 @@ def get_database_schema(database_id: str) -> dict:
         logger.error(f"获取数据库结构失败: {str(e)}")
         raise
 
+@retry_on_failure(max_retries=3, delay=1.0)
 def get_template_page(template_id: str) -> Dict[str, Any]:
     """获取模板页面的内容"""
     try:
@@ -60,6 +129,7 @@ def print_template_info(template_data: Dict[str, Any]) -> None:
     
     print("=====================")
 
+@retry_on_failure(max_retries=3, delay=1.0)
 def get_today_pages(database_id: str) -> List[dict]:
     """获取当日创建的所有页面"""
     tz = pytz.timezone('Asia/Shanghai')
@@ -87,6 +157,7 @@ def get_today_pages(database_id: str) -> List[dict]:
     )
     return response.get("results", [])
 
+@retry_on_failure(max_retries=3, delay=1.0)
 def create_custom_page(database_id: str, title_property_name: str) -> Optional[dict]:
     """创建具有特定结构的页面"""
     try:
@@ -561,6 +632,7 @@ def create_custom_page(database_id: str, title_property_name: str) -> Optional[d
         traceback.print_exc()
         return None
 
+@retry_on_failure(max_retries=3, delay=1.0)
 def add_completed_items(page_id: str, completed_items: List[str]) -> bool:
     """向页面最底部添加已完成的内容项目"""
     try:
@@ -603,11 +675,16 @@ def add_completed_items(page_id: str, completed_items: List[str]) -> bool:
         return False
 
 def main(database_id: str, template_id: str = None, force_create: bool = False, 
-         completed_items: List[str] = None, debug: bool = False):
+         completed_items: List[str] = None, debug: bool = False, custom_client: Client = None):
     # 设置日志级别
     if debug:
         logger.setLevel(logging.DEBUG)
         logger.debug("启用调试模式")
+
+    # 如果提供了自定义客户端，使用它替换全局客户端
+    global notion
+    if custom_client:
+        notion = custom_client
 
     # 首先获取数据库结构，检查标题属性的名称
     try:
@@ -680,7 +757,8 @@ if __name__ == "__main__":
     parser.add_argument("--completed", "-c", nargs="+", help="要添加到已完成部分的项目列表")
     args = parser.parse_args()
     # 如果提供了令牌，重新初始化客户端
+    custom_notion_client = None
     if args.token:
-        notion = Client(auth=args.token)
+        custom_notion_client = create_notion_client(args.token)
         logger.info("使用提供的令牌初始化Notion客户端") 
-    main(args.database, args.template, args.force, args.completed, args.debug)
+    main(args.database, args.template, args.force, args.completed, args.debug, custom_notion_client)
