@@ -156,9 +156,9 @@ def _get_diff_type(ces_fulfill, oes_fulfill, ces_freeze, oes_freeze):
 if __name__ == "__main__":
     # ==================== 配置文件路径 ====================
     # 请修改为实际的文件路径
-    OES_CSV_PATH = "/Users/bjhl/oes-5.csv"           # OES CSV文件路径
-    CES_CSV_PATH = "/Users/bjhl/ces-5.csv"           # CES CSV文件路径
-    OUTPUT_CSV_PATH = "/Users/bjhl/status_diff_v5_1.csv"  # 输出文件路径
+    OES_CSV_PATH = "/Users/bjhl/oes-2.csv"           # OES CSV文件路径
+    CES_CSV_PATH = "/Users/bjhl/ces-2.csv"           # CES CSV文件路径
+    OUTPUT_CSV_PATH = "/Users/bjhl/status_diff_v3.csv"  # 输出文件路径
     # ===================================================
 
     try:
