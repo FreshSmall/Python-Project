@@ -18,19 +18,19 @@ API_URL = "https://qingzhou.baijia.com/qingzhou/tianyan/alarmcenter/earlywarning
 # 默认请求体参数
 DEFAULT_QUERY_PARAMS = {
     "appIds": [
-        "baijia.gt.ecommerce.product.course-center"
+        "baijia.gt.ecommerce.course.course-center-b"
     ],
     "alarmLevel": "standard;important;highPriority",
-    "startTime": 1771430400000,
-    "endTime": 1772035200000,
+    "startTime": 1773244800000,
+    "endTime": 1773849600000,
     "pageDto": {
         "pageNum": 1,
-        "pageSize": 150
+        "pageSize": 1000
     },
     "activeName": "earlyAlarmQuery",
-    "appNid": "baijia.gt.ecommerce.product.course-center",
+    "appNid": "baijia.gt.ecommerce.course.course-center-b",
     "environment": "prod"
-} 
+}
 # =================================================
 
 
