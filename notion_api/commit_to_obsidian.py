@@ -160,7 +160,7 @@ def append_commit_to_daily_note(repo_name, commit_message, commit_hash):
         return False
 
     # 构建新行
-    new_line = f"- {repo_name}：{commit_message} <!-- hash:{short_hash} -->"
+    new_line = f"- [{repo_name}] {commit_message} <!-- hash:{short_hash} -->"
 
     # 找到插入位置：在 section 内容末尾、下一个 section 之前
     # 跳过 section 标题后的空行和已有内容，找到最后一个非空行
